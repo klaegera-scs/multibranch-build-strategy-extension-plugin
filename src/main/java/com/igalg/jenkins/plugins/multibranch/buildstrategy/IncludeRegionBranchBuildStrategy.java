@@ -33,6 +33,7 @@ import java.util.stream.Collectors;
 
 import org.apache.tools.ant.types.selectors.SelectorUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
+import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMRevision;
 
 import hudson.Extension;
 import hudson.scm.SCM;
@@ -69,6 +70,20 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
     @Override
     public boolean isAutomaticBuild(SCMSource source, SCMHead head, SCMRevision currRevision, SCMRevision prevRevision) {
         try {
+
+            // handle 'initial' builds where no prevRevision is known (new branches and PRs)
+            if (prevRevision == null) {
+                if (currRevision instanceof PullRequestSCMRevision) {
+                    logger.info("New pull request detected - setting prevRevision to target");
+                    PullRequestSCMRevision<?> prRevision = (PullRequestSCMRevision<?>) currRevision;
+                    currRevision = prRevision.getPull();
+                    prevRevision = prRevision.getTarget();
+                    logger.info("PR: curr: " + currRevision + " prev: " + prevRevision);
+                } else {
+                    logger.info("New non-PR branch detected - triggering initial index build");
+                    return true;
+                }
+            }
         	
         	 List<String> includedRegionsList = Arrays.stream(
              		includedRegions.split("\n")).map(e -> e.trim()).collect(Collectors.toList());
