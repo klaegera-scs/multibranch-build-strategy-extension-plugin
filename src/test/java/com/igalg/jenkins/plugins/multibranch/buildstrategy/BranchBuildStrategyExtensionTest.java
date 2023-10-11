@@ -85,7 +85,7 @@ public class BranchBuildStrategyExtensionTest{
     public void testIncludeIsReturnsTrueIfAtleastOneAffectedFileInTheRange() throws Exception {
         String commits = generateCommitLogString("src/main/java/com/a/a.java","src/main/java/com/a/b.java","README.md");
         setupGitSourceMocksWithCommits(commits);
-        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy(String.join("\n", includeRegions));
+        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy(String.join("\n", includeRegions), "");
         assertTrue(includeRegionBranchBuildStrategy.isAutomaticBuild(source, head, currRevision, prevRevision));
     }
     
@@ -95,7 +95,7 @@ public class BranchBuildStrategyExtensionTest{
         String commits = generateCommitLogString(".gitignore","README.md") + generateCommitLogString("src/main/java/com/a/a.java","src/main/java/com/a/b.java","README.md");
         setupGitSourceMocksWithCommits(commits);
         System.err.println(commits);
-        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy(String.join("\n", includeRegions));
+        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy(String.join("\n", includeRegions), "");
         assertTrue(includeRegionBranchBuildStrategy.isAutomaticBuild(source, head, currRevision, prevRevision));
     }
     
@@ -103,7 +103,7 @@ public class BranchBuildStrategyExtensionTest{
     public void testIncludeIsReturnsFalseIfNoOneAffectedFileInTheRange() throws Exception {
         String commits = generateCommitLogString(".gitignore","README.md");
         setupGitSourceMocksWithCommits(commits);
-        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy(String.join("\n", includeRegions));
+        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy(String.join("\n", includeRegions), "");
         assertFalse(includeRegionBranchBuildStrategy.isAutomaticBuild(source, head, currRevision, prevRevision));
     }
     
@@ -111,7 +111,7 @@ public class BranchBuildStrategyExtensionTest{
     public void testIncludeIsReturnsFalseIfIncludedRangeIsEmpty() throws Exception {
         String commits = generateCommitLogString(".gitignore","README.md");
         setupGitSourceMocksWithCommits(commits);
-        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy("");
+        IncludeRegionBranchBuildStrategy includeRegionBranchBuildStrategy = new IncludeRegionBranchBuildStrategy("", "");
         assertFalse(includeRegionBranchBuildStrategy.isAutomaticBuild(source, head, currRevision, prevRevision));
     }
     

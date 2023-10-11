@@ -3,4 +3,7 @@
   <f:entry title="Trigger builds for included regions" field="includedRegions">
     <f:textarea />
   </f:entry>
+  <f:entry title="Ignore changes also present in given branch" field="excludedBranch">
+    <f:textbox default="" />
+  </f:entry>
 </j:jelly>

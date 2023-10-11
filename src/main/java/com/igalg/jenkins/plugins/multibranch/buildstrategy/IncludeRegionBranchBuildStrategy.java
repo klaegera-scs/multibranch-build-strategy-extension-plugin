@@ -27,10 +27,12 @@ package com.igalg.jenkins.plugins.multibranch.buildstrategy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
+import hudson.plugins.git.GitChangeSet;
 import org.apache.tools.ant.types.selectors.SelectorUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMRevision;
@@ -48,15 +50,21 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
     
 	private static final Logger logger = Logger.getLogger(IncludeRegionBranchBuildStrategy.class.getName());
     private final String includedRegions;
-    
+    private final String excludedBranch;
+
     public String getIncludedRegions() {
-		return includedRegions;
-	}
+        return includedRegions;
+    }
+
+    public String getExcludedBranch() {
+        return excludedBranch;
+    }
 
 
     @DataBoundConstructor
-    public IncludeRegionBranchBuildStrategy(String includedRegions) {
+    public IncludeRegionBranchBuildStrategy(String includedRegions, String excludedBranch) {
         this.includedRegions = includedRegions;
+        this.excludedBranch = excludedBranch.trim();
     }
 
     
@@ -113,8 +121,26 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
                 logger.severe("Error build SCM file system");
                 return true;
             }
-            
-            List<String> pathesList = new ArrayList<String>(collectAllAffectedFiles(getGitChangeSetListFromPrevious(fileSystem, head, prevRevision)));
+
+            List<GitChangeSet> changeSets = getGitChangeSetListFromPrevious(fileSystem, head, prevRevision);
+
+            if (!excludedBranch.isEmpty() && !excludedBranch.equals(head.getName())) {
+                logger.info("Excluding commits in branch [" + excludedBranch + "]");
+                SCMRevision excludedRevision = source.fetch(excludedBranch, null);
+                logger.info("Excluded branch resolved to [" + excludedRevision + "]");
+
+                List<GitChangeSet> changeSetsNotExcluded = getGitChangeSetListFromPrevious(fileSystem, head, excludedRevision);
+                Set<String> revisionsNotExcluded = changeSetsNotExcluded.stream().map(GitChangeSet::getRevision).collect(Collectors.toSet());
+                List<GitChangeSet> filteredRevisions = changeSets.stream().filter(cs -> revisionsNotExcluded.contains(cs.getRevision())).collect(Collectors.toList());
+
+                logger.info("Number of changesets before exclusion: " + changeSets.size());
+                logger.info("Number of changesets not in exclusion: " + changeSetsNotExcluded.size());
+                logger.info("Number of changesets in intersection: " + filteredRevisions.size());
+
+                changeSets = filteredRevisions;
+            }
+
+            List<String> pathesList = new ArrayList<String>(collectAllAffectedFiles(changeSets));
             // If there is match for at least one file run the build
             for (String filePath : pathesList){
     			for(String includedRegion:includedRegionsList) {    				
