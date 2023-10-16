@@ -124,7 +124,7 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
 
             List<GitChangeSet> changeSets = getGitChangeSetListFromPrevious(fileSystem, head, prevRevision);
 
-            if (!excludedBranch.isEmpty() && !excludedBranch.equals(head.getName())) {
+            if (excludedBranch != null && !excludedBranch.isEmpty() && !excludedBranch.equals(head.getName())) {
                 logger.info("Excluding commits in branch [" + excludedBranch + "]");
                 SCMRevision excludedRevision = source.fetch(excludedBranch, null);
                 logger.info("Excluded branch resolved to [" + excludedRevision + "]");
