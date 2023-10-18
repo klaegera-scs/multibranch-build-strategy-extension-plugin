@@ -33,6 +33,8 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import hudson.plugins.git.GitChangeSet;
+import jenkins.plugins.git.AbstractGitSCMSource;
+import jenkins.plugins.git.GitSCMFileSystem;
 import org.apache.tools.ant.types.selectors.SelectorUtils;
 import org.kohsuke.stapler.DataBoundConstructor;
 import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMRevision;
@@ -126,7 +128,11 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
 
             if (excludedBranch != null && !excludedBranch.isEmpty() && !excludedBranch.equals(head.getName())) {
                 logger.info("Excluding commits in branch [" + excludedBranch + "]");
-                SCMRevision excludedRevision = source.fetch(excludedBranch, null);
+
+                GitSCMFileSystem gitFs = (GitSCMFileSystem) fileSystem;
+                String remote = gitFs.invoke(repo -> repo.getRemoteNames().stream().findFirst().get());
+                String excludedRevisionHash = gitFs.invoke(repo -> repo.findRef(remote + "/" + excludedBranch).getObjectId().name());
+                AbstractGitSCMSource.SCMRevisionImpl excludedRevision = new AbstractGitSCMSource.SCMRevisionImpl(new SCMHead(excludedBranch), excludedRevisionHash);
                 logger.info("Excluded branch resolved to [" + excludedRevision + "]");
 
                 List<GitChangeSet> changeSetsNotExcluded = getGitChangeSetListFromPrevious(fileSystem, head, excludedRevision);
