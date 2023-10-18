@@ -157,9 +157,8 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
             return false;
             
         } catch (Exception e) {
-            //we don't want to cancel builds on unexpected exception
-        	logger.log(Level.SEVERE, "Unecpected exception", e);
-            return true;
+        	logger.log(Level.SEVERE, "Unexpected exception", e);
+            return false;
         }
         
         
