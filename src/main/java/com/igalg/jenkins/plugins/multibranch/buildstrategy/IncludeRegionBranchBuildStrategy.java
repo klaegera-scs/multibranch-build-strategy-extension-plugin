@@ -24,6 +24,17 @@
 package com.igalg.jenkins.plugins.multibranch.buildstrategy;
 
 
+import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMRevision;
+import hudson.Extension;
+import hudson.plugins.git.GitChangeSet;
+import hudson.scm.SCM;
+import jenkins.branch.BranchBuildStrategyDescriptor;
+import jenkins.plugins.git.AbstractGitSCMSource;
+import jenkins.plugins.git.GitSCMFileSystem;
+import jenkins.scm.api.*;
+import org.apache.tools.ant.types.selectors.SelectorUtils;
+import org.kohsuke.stapler.DataBoundConstructor;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,25 +43,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
-import hudson.plugins.git.GitChangeSet;
-import jenkins.plugins.git.AbstractGitSCMSource;
-import jenkins.plugins.git.GitSCMFileSystem;
-import org.apache.tools.ant.types.selectors.SelectorUtils;
-import org.kohsuke.stapler.DataBoundConstructor;
-import com.cloudbees.jenkins.plugins.bitbucket.PullRequestSCMRevision;
-
-import hudson.Extension;
-import hudson.scm.SCM;
-import jenkins.branch.BranchBuildStrategyDescriptor;
-import jenkins.scm.api.SCMFileSystem;
-import jenkins.scm.api.SCMHead;
-import jenkins.scm.api.SCMRevision;
-import jenkins.scm.api.SCMSource;
-import jenkins.scm.api.SCMSourceOwner;
-
 public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtension {
-    
-	private static final Logger logger = Logger.getLogger(IncludeRegionBranchBuildStrategy.class.getName());
+
+    private static final Logger logger = Logger.getLogger(IncludeRegionBranchBuildStrategy.class.getName());
     private final String includedRegions;
     private final String excludedBranch;
 
@@ -69,13 +64,11 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
         this.excludedBranch = excludedBranch.trim();
     }
 
-    
 
-   
     /**
      * Determine if build is required by checking if any of the commit affected files is in the include regions.
      *
-     * @return true if  there is at least one affected file in the include regions 
+     * @return true if  there is at least one affected file in the include regions
      */
     @Override
     public boolean isAutomaticBuild(SCMSource source, SCMHead head, SCMRevision currRevision, SCMRevision prevRevision) {
@@ -94,31 +87,31 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
                     return true;
                 }
             }
-        	
-        	 List<String> includedRegionsList = Arrays.stream(
-             		includedRegions.split("\n")).map(e -> e.trim()).collect(Collectors.toList());
 
-             logger.info(String.format("Included regions: %s", includedRegionsList.toString()));
-             
-             // No regions included cancel the build
-             if(includedRegionsList.isEmpty())
-             	return false;
-        	
-        	
-        	// build SCM object
-        	SCM scm = source.build(head, currRevision);
-            
-  
-        	// Verify source owner
-        	SCMSourceOwner owner = source.getOwner();
+            List<String> includedRegionsList = Arrays.stream(
+                    includedRegions.split("\n")).map(e -> e.trim()).collect(Collectors.toList());
+
+            logger.info(String.format("Included regions: %s", includedRegionsList.toString()));
+
+            // No regions included cancel the build
+            if (includedRegionsList.isEmpty())
+                return false;
+
+
+            // build SCM object
+            SCM scm = source.build(head, currRevision);
+
+
+            // Verify source owner
+            SCMSourceOwner owner = source.getOwner();
             if (owner == null) {
                 logger.severe("Error verify SCM source owner");
                 return true;
             }
-            
-            
+
+
             // Build SCM file system
-            SCMFileSystem fileSystem = buildSCMFileSystem(source,head,currRevision,scm,owner);            
+            SCMFileSystem fileSystem = buildSCMFileSystem(source, head, currRevision, scm, owner);
             if (fileSystem == null) {
                 logger.severe("Error build SCM file system");
                 return true;
@@ -148,26 +141,25 @@ public class IncludeRegionBranchBuildStrategy extends BranchBuildStrategyExtensi
 
             List<String> pathesList = new ArrayList<String>(collectAllAffectedFiles(changeSets));
             // If there is match for at least one file run the build
-            for (String filePath : pathesList){
-    			for(String includedRegion:includedRegionsList) {    				
-    				if(SelectorUtils.matchPath(includedRegion, filePath)) {
-    					logger.info("Matched included region:" + includedRegion + " with file path:" + filePath);
-    					return true;
-    				}else {
-    					logger.fine("Not matched included region:" + includedRegion + " with file path:" + filePath);
-    				}
-    			}
+            for (String filePath : pathesList) {
+                for (String includedRegion : includedRegionsList) {
+                    if (SelectorUtils.matchPath(includedRegion, filePath)) {
+                        logger.info("Matched included region:" + includedRegion + " with file path:" + filePath);
+                        return true;
+                    } else {
+                        logger.fine("Not matched included region:" + includedRegion + " with file path:" + filePath);
+                    }
+                }
             }
-            
-            
+
+
             return false;
-            
+
         } catch (Exception e) {
-        	logger.log(Level.SEVERE, "Unexpected exception", e);
+            logger.log(Level.SEVERE, "Unexpected exception", e);
             return false;
         }
-        
-        
+
 
     }
 
